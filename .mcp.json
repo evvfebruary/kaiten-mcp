@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "kaiten": {
+      "command": "uv",
+      "args": ["run", "kaiten-mcp", "--transport", "stdio"],
+      "env": {
+        "KAITEN_API_TOKEN": "${KAITEN_API_TOKEN}",
+        "KAITEN_WORKSPACE_SLUG": "${KAITEN_WORKSPACE_SLUG}"
+      }
+    }
+  }
+}

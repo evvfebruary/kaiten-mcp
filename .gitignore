@@ -1,0 +1,30 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ty_cache/
+
+# Virtual environments
+.venv
+
+# Secrets and local env
+.env
+.env.*
+!.env.example
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Benchmark artifacts
+benchmarks/out/

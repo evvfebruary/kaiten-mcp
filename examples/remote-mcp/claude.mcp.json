@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "kaiten": {
+      "type": "http",
+      "url": "https://kaiten-mcp.example.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${KAITEN_API_TOKEN}"
+      }
+    }
+  }
+}

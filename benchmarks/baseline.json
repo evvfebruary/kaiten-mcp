@@ -1,0 +1,37 @@
+{
+  "budgets": {
+    "discovery": {
+      "max_estimated_tokens_high": 248,
+      "max_output_bytes": 623
+    },
+    "get_task": {
+      "max_estimated_tokens_high": 331,
+      "max_output_bytes": 788
+    },
+    "get_task_with_description": {
+      "max_estimated_tokens_high": 1255,
+      "max_output_bytes": 2638
+    },
+    "list_comments": {
+      "max_estimated_tokens_high": 1721,
+      "max_output_bytes": 3574
+    },
+    "list_tags": {
+      "max_estimated_tokens_high": 157,
+      "max_output_bytes": 440
+    },
+    "list_tasks": {
+      "max_estimated_tokens_high": 3154,
+      "max_output_bytes": 6436
+    },
+    "move_task": {
+      "max_estimated_tokens_high": 218,
+      "max_output_bytes": 563
+    },
+    "workflow": {
+      "max_estimated_tokens_high": 5574,
+      "max_output_bytes": 11402
+    }
+  },
+  "min_reduction_ratio": 0.899
+}
