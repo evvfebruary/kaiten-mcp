@@ -1,0 +1,223 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+concurrency:
+  group: release-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+env:
+  MCP_PUBLISHER_VERSION: "1.8.0"
+  MCP_PUBLISHER_LINUX_AMD64_SHA256: "1370446bbe74d562608e8005a6ccce02d146a661fbd78674e11cc70b9618d6cf"
+  REGISTRY: ghcr.io
+  IMAGE_NAME: evvfebruary/kaiten-mcp
+
+jobs:
+  validate:
+    name: Validate and build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Validate release metadata
+        id: metadata
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          python scripts/check_release_metadata.py --tag "$RELEASE_TAG"
+          echo "version=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies
+        run: uv sync --locked --group dev
+
+      - name: Run release tests
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+          uv run ty check
+          uv run pytest -m "not live"
+          uv run kaiten-mcp-benchmark --check
+
+      - name: Install MCP publisher
+        run: |
+          archive="mcp-publisher_linux_amd64.tar.gz"
+          curl --fail --location --silent --show-error \
+            --output "$archive" \
+            "https://github.com/modelcontextprotocol/registry/releases/download/v${MCP_PUBLISHER_VERSION}/${archive}"
+          echo "${MCP_PUBLISHER_LINUX_AMD64_SHA256}  ${archive}" | sha256sum --check
+          tar -xzf "$archive" mcp-publisher
+
+      - name: Validate MCP Registry manifest
+        run: ./mcp-publisher validate server.json
+
+      - name: Build distributions
+        run: uv build
+
+      - name: Smoke test wheel
+        run: uv run --isolated --no-project --with dist/*.whl kaiten-mcp --help
+
+      - name: Smoke test source distribution
+        run: uv run --isolated --no-project --with dist/*.tar.gz kaiten-mcp --help
+
+      - name: Upload distributions
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: python-distributions
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+
+  pypi:
+    name: Publish PyPI
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
+        with:
+          python-version: "3.12"
+
+      - name: Download distributions
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: python-distributions
+          path: dist/
+
+      - name: Publish distributions
+        run: uv publish dist/*
+
+  container:
+    name: Publish GHCR
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      attestations: write
+      contents: read
+      id-token: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate image metadata
+        id: meta
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest,enable=${{ !github.event.release.prerelease }}
+
+      - name: Build and push image
+        id: push
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ needs.validate.outputs.version }}
+            REVISION=${{ github.sha }}
+
+      - name: Attest image provenance
+        uses: actions/attest@36051bcae73b7c2a8a6945a48cbf80953c6baa35 # v4
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+  mcp-registry:
+    name: Publish MCP Registry
+    needs: [validate, pypi]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
+        with:
+          python-version: "3.12"
+
+      - name: Wait for PyPI package
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          for attempt in $(seq 1 12); do
+            if uvx --refresh --from "kaiten-mcp==${VERSION}" kaiten-mcp --help; then
+              exit 0
+            fi
+            echo "PyPI package not visible yet (attempt ${attempt}/12)"
+            sleep 10
+          done
+          echo "Timed out waiting for kaiten-mcp==${VERSION} on PyPI" >&2
+          exit 1
+
+      - name: Install MCP publisher
+        run: |
+          archive="mcp-publisher_linux_amd64.tar.gz"
+          curl --fail --location --silent --show-error \
+            --output "$archive" \
+            "https://github.com/modelcontextprotocol/registry/releases/download/v${MCP_PUBLISHER_VERSION}/${archive}"
+          echo "${MCP_PUBLISHER_LINUX_AMD64_SHA256}  ${archive}" | sha256sum --check
+          tar -xzf "$archive" mcp-publisher
+
+      - name: Authenticate to MCP Registry
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish MCP Registry metadata
+        run: ./mcp-publisher publish server.json
+
+      - name: Verify MCP Registry publication
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          for attempt in $(seq 1 12); do
+            if curl --fail --silent --show-error \
+              "https://registry.modelcontextprotocol.io/v0.1/servers?search=io.github.evvfebruary%2Fkaiten-mcp" \
+              | python -c 'import json, os, sys; data=json.load(sys.stdin); name="io.github.evvfebruary/kaiten-mcp"; version=os.environ["VERSION"]; raise SystemExit(0 if any(item.get("server", {}).get("name") == name and item.get("server", {}).get("version") == version for item in data.get("servers", [])) else 1)'
+            then
+              echo "MCP Registry publication verified"
+              exit 0
+            fi
+            echo "Registry version not visible yet (attempt ${attempt}/12)"
+            sleep 10
+          done
+          echo "Timed out verifying MCP Registry publication" >&2
+          exit 1

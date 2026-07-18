@@ -1,5 +1,7 @@
 # kaiten-mcp
 
+<!-- mcp-name: io.github.evvfebruary/kaiten-mcp -->
+
 **MCP-сервер для [Kaiten](https://kaiten.ru/)** — интеграция канбан-досок и задач Kaiten с AI-ассистентами ([Cursor](https://cursor.com/), [Claude Code](https://docs.anthropic.com/en/docs/claude-code) и любым MCP-клиентом).
 
 Управляйте карточками прямо из чата: создавайте задачи, перемещайте по колонкам, обновляйте описания, оставляйте комментарии и теги — без ручного копирования из веб-интерфейса и без огромных JSON-ответов API в контексте модели.
@@ -31,15 +33,14 @@
 ### 1. Установка и запуск
 
 ```bash
-git clone https://github.com/evvfebruary/kaiten-mcp.git
-cd kaiten-mcp
-uv sync --all-groups
-
 export KAITEN_API_TOKEN='ваш-токен'
 export KAITEN_WORKSPACE_SLUG='ваша-компания'   # → https://ваша-компания.kaiten.ru/api/v1
 
-uv run kaiten-mcp --transport stdio
+uvx kaiten-mcp --transport stdio
 ```
+
+`uvx` скачивает пакет из PyPI, создаёт изолированное окружение и запускает сервер.
+Клонировать репозиторий не требуется.
 
 Для on-prem / кастомного домена вместо slug задайте полный корень API:
 
@@ -128,11 +129,13 @@ uv run kaiten-mcp --transport streamable-http --host 0.0.0.0 --port 8000
 Docker:
 
 ```bash
-docker build -t kaiten-mcp .
+docker pull ghcr.io/evvfebruary/kaiten-mcp:latest
 docker run --rm -p 8000:8000 \
   -e KAITEN_WORKSPACE_SLUG=ваша-компания \
-  kaiten-mcp
+  ghcr.io/evvfebruary/kaiten-mcp:latest
 ```
+
+Для локальной разработки образ можно собрать командой `docker build -t kaiten-mcp .`.
 
 Каждый клиент передаёт свой токен:
 
@@ -216,6 +219,8 @@ Live smoke (опционально, не в CI по умолчанию):
 KAITEN_API_TOKEN=... KAITEN_WORKSPACE_SLUG=... uv run pytest -m live
 ```
 
+Публикация релизов (PyPI, GHCR, Official MCP Registry) описана в [RELEASING.md](RELEASING.md).
+
 ## Структура
 
 ```text
@@ -231,6 +236,8 @@ src/kaiten_mcp/
 tests/
 benchmarks/
 examples/remote-mcp/
+server.json      # Official MCP Registry metadata
+RELEASING.md
 ```
 
 ## Безопасность

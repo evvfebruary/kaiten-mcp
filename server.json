@@ -1,0 +1,46 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.evvfebruary/kaiten-mcp",
+  "title": "Kaiten",
+  "description": "Manage Kaiten spaces, boards, cards, comments, and tags with compact MCP responses.",
+  "repository": {
+    "url": "https://github.com/evvfebruary/kaiten-mcp",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "kaiten-mcp",
+      "version": "0.1.0",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "KAITEN_API_TOKEN",
+          "description": "Kaiten API token from Profile > API key.",
+          "isRequired": true,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "KAITEN_WORKSPACE_SLUG",
+          "description": "Kaiten workspace slug. Required unless KAITEN_BASE_URL is set.",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        },
+        {
+          "name": "KAITEN_BASE_URL",
+          "description": "Full Kaiten API root for on-prem or custom domains. Required unless KAITEN_WORKSPACE_SLUG is set.",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        }
+      ]
+    }
+  ]
+}

@@ -5,9 +5,16 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+env:
+  MCP_PUBLISHER_VERSION: "1.8.0"
+  MCP_PUBLISHER_LINUX_AMD64_SHA256: "1370446bbe74d562608e8005a6ccce02d146a661fbd78674e11cc70b9618d6cf"
 
 jobs:
   lint:
@@ -51,3 +58,54 @@ jobs:
 
       - name: Run tests
         run: uv run pytest -m "not live"
+
+  package:
+    name: Package + MCP metadata
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Check release metadata
+        run: python scripts/check_release_metadata.py
+
+      - name: Install MCP publisher
+        run: |
+          archive="mcp-publisher_linux_amd64.tar.gz"
+          curl --fail --location --silent --show-error \
+            --output "$archive" \
+            "https://github.com/modelcontextprotocol/registry/releases/download/v${MCP_PUBLISHER_VERSION}/${archive}"
+          echo "${MCP_PUBLISHER_LINUX_AMD64_SHA256}  ${archive}" | sha256sum --check
+          tar -xzf "$archive" mcp-publisher
+
+      - name: Validate MCP Registry manifest
+        run: ./mcp-publisher validate server.json
+
+      - name: Build wheel and source distribution
+        run: uv build
+
+      - name: Smoke test wheel
+        run: uv run --isolated --no-project --with dist/*.whl kaiten-mcp --help
+
+      - name: Smoke test source distribution
+        run: uv run --isolated --no-project --with dist/*.tar.gz kaiten-mcp --help
+
+  container:
+    name: Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build Docker image
+        run: |
+          version="$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')"
+          docker build \
+            --build-arg "VERSION=${version}" \
+            --build-arg "REVISION=${GITHUB_SHA}" \
+            --tag kaiten-mcp:ci \
+            .
