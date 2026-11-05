@@ -1,5 +1,7 @@
 # kaiten-mcp
 
+Русский | [English](README.en.md)
+
 <!-- mcp-name: io.github.evvfebruary/kaiten-mcp -->
 
 **MCP-сервер для [Kaiten](https://kaiten.ru/)** — интеграция канбан-досок и задач Kaiten с AI-ассистентами ([Cursor](https://cursor.com/), [Claude Code](https://docs.anthropic.com/en/docs/claude-code) и любым MCP-клиентом).
@@ -52,7 +54,28 @@ export KAITEN_BASE_URL='https://kaiten.example.com/api/v1'
 
 ### 2. Cursor
 
-Конфиг проекта уже есть: [`.cursor/mcp.json`](.cursor/mcp.json).
+Для разработки в этом репозитории конфиг уже есть: [`.cursor/mcp.json`](.cursor/mcp.json).
+Для использования в другом проекте добавьте сервер в его `.cursor/mcp.json`, сохранив существующие записи:
+
+```json
+{
+  "mcpServers": {
+    "kaiten": {
+      "command": "uvx",
+      "args": ["kaiten-mcp", "--transport", "stdio"],
+      "env": {
+        "KAITEN_API_TOKEN": "${env:KAITEN_API_TOKEN}",
+        "KAITEN_WORKSPACE_SLUG": "${env:KAITEN_WORKSPACE_SLUG}"
+      }
+    }
+  }
+}
+```
+
+Этот вариант устанавливает пакет из PyPI и не требует клонирования репозитория.
+`uvx` должен быть доступен в PATH процесса Cursor.
+Для on-prem замените запись workspace slug на `"KAITEN_BASE_URL": "${env:KAITEN_BASE_URL}"`
+и экспортируйте полный корень API.
 
 1. Экспортируйте токен и workspace в окружение, которое наследует Cursor:
 
@@ -80,8 +103,44 @@ claude mcp list
 Или вручную:
 
 ```bash
-claude mcp add --transport stdio kaiten -- uv run kaiten-mcp --transport stdio
+claude mcp add --transport stdio kaiten -- uvx kaiten-mcp --transport stdio
 ```
+
+## Skill для работы с Kaiten
+
+MCP-сервер предоставляет инструменты и доступ к Kaiten. Бесплатный [skill](skills/kaiten/SKILL.md)
+подсказывает агенту, как находить и изменять карточки, готовить задачи, делать обзор доски
+и предлагать улучшения очереди. Установка skill не подключает сервер: сначала настройте MCP.
+
+Сохраните файл skill в `.cursor/skills/kaiten/SKILL.md` своего проекта.
+Или скопируйте его из локального клона этого репозитория:
+
+```bash
+mkdir -p /path/to/your-project/.cursor/skills/kaiten
+cp skills/kaiten/SKILL.md /path/to/your-project/.cursor/skills/kaiten/SKILL.md
+```
+
+Замените `/path/to/your-project` на путь своего проекта; перед заменой существующего skill
+проверьте его содержимое. Начните новый Agent-чат и убедитесь, что skill доступен.
+Cursor может выбирать его для запросов о Kaiten; подробности — в
+[документации Cursor](https://cursor.com/docs/skills).
+Для другого клиента с поддержкой skills используйте его каталог установки.
+Инструкции написаны на английском, но агент отвечает на языке пользователя.
+
+Примеры менеджерских запросов:
+
+- «Сделай обзор доски Product по колонкам и дай ссылки на задачи, требующие внимания».
+- «Посмотри очередь Product и предложи, какие описания стоит уточнить. Карточки пока не меняй».
+- «Подготовь задачу с критериями готовности на основе этих требований: …».
+
+Обзор отражает доступное текущее состояние доски. Инструменты не предоставляют полной
+истории для расчёта throughput за неделю или cycle time.
+
+## Демонстрация
+
+[Сценарий записи в Cursor](docs/demo.md): создать карточку → переместить → получить обзор
+демонстрационных задач. Тестовый стенд подготовлен; реальная запись в Cursor ещё не выполнена.
+[Подготовка стенда и проверки](CHECKING.md#воспроизводимый-демо-стенд).
 
 ## Примеры запросов к агенту
 
