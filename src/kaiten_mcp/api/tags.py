@@ -22,7 +22,7 @@ async def list_tags(
     if space_id is not None:
         params["space_id"] = space_id
     raw = await client.get_paginated("/tags", params=params, offset=offset, limit=limit)
-    return [Tag.model_validate(item) for item in raw if isinstance(item, dict)]
+    return [Tag.model_validate(item) for item in raw]
 
 
 async def get_card_tags(client: KaitenClient, card_id: int) -> list[Tag]:
@@ -31,7 +31,7 @@ async def get_card_tags(client: KaitenClient, card_id: int) -> list[Tag]:
         return []
     if not isinstance(data, list):
         raise TypeError("Expected tag list from Kaiten.")
-    return [Tag.model_validate(item) for item in data if isinstance(item, dict)]
+    return [Tag.model_validate(item) for item in data]
 
 
 async def add_tag_to_card(client: KaitenClient, card_id: int, name: str) -> Tag:

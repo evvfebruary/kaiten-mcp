@@ -44,7 +44,7 @@ async def list_cards(
     if include_description:
         params["additional_card_fields"] = "description"
     raw = await client.get_paginated("/cards", params=params, offset=offset, limit=limit)
-    return [Card.model_validate(item) for item in raw if isinstance(item, dict)]
+    return [Card.model_validate(item) for item in raw]
 
 
 async def update_card(client: KaitenClient, card_id: int, payload: dict[str, Any]) -> Card:

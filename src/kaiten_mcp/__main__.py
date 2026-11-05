@@ -60,7 +60,16 @@ def main(argv: list[str] | None = None) -> None:
 
     server = create_server(settings)
     transport: Literal["stdio", "streamable-http"] = args.transport
-    server.run(transport=transport)
+    if transport == "stdio":
+        server.run(transport=transport)
+    else:
+        server.run(
+            transport=transport,
+            host=settings.host,
+            port=settings.port,
+            stateless_http=True,
+            streamable_http_path="/mcp",
+        )
 
 
 if __name__ == "__main__":

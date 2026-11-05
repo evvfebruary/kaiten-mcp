@@ -68,6 +68,7 @@ class KaitenClient:
         # New integrations should send broken_api=false for stable integer IDs.
         query.setdefault("broken_api", "false")
 
+        safe_to_retry = method.upper() in {"GET", "HEAD", "OPTIONS"}
         attempt = 0
         while True:
             self._request_count += 1
@@ -87,7 +88,7 @@ class KaitenClient:
                     token_fp=self._token_fp,
                     error=str(exc),
                 )
-                if attempt >= self._settings.max_retries:
+                if not safe_to_retry or attempt >= self._settings.max_retries:
                     raise KaitenError(f"Kaiten transport error: {exc}") from exc
                 await asyncio.sleep(self._backoff_seconds(attempt))
                 attempt += 1
@@ -115,7 +116,11 @@ class KaitenClient:
                 attempt += 1
                 continue
 
-            if response.status_code >= 500 and attempt < self._settings.max_retries:
+            if (
+                safe_to_retry
+                and response.status_code >= 500
+                and attempt < self._settings.max_retries
+            ):
                 log_event(
                     logger,
                     logging.WARNING,
@@ -219,6 +224,17 @@ class KaitenClient:
                 if isinstance(value, list):
                     return value
         raise KaitenError("Unexpected paginated response shape from Kaiten.")
+
+    async def get_all(self, path: str) -> list[Any]:
+        """Read endpoints that previously returned an unpaginated list."""
+        items: list[Any] = []
+        size = self._settings.max_page_size
+        for _ in range(1000):
+            page = await self.get_paginated(path, offset=len(items), limit=size)
+            items.extend(page)
+            if len(page) < size:
+                return items
+        raise KaitenError("Pagination exceeded 1000 pages; refusing a partial result.")
 
     def _backoff_seconds(self, attempt: int) -> float:
         base = min(2**attempt, 8)

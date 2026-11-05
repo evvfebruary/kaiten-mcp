@@ -150,13 +150,14 @@ Authorization: Bearer <kaiten-api-token>
 
 Заметки для Kubernetes:
 
-- Stateless-реплики допустимы (`stateless_http=True`)
+- Stateless-реплики допустимы (SDK v2, `stateless_http=True`)
 - TLS — на Ingress
 - Увеличьте proxy/read timeouts для streaming
 - Не логируйте заголовок `Authorization`
 - У Kaiten лимит порядка ~50 req/s — делите бюджет между репликами
 
-Модель с Bearer-токеном на запрос — осознанный выбор v1 (не browser OAuth).
+HTTP всегда требует Bearer-токен вызывающего; общий `KAITEN_API_TOKEN` используется только в stdio.
+Полноценная MCP OAuth-авторизация пока не реализована.
 
 ## Переменные окружения
 
@@ -213,11 +214,17 @@ uv run pytest
 uv run kaiten-mcp-benchmark --check
 ```
 
-Live smoke (опционально, не в CI по умолчанию):
+Проверки совместимости (все 15 инструментов, оба транспорта, документация API):
 
 ```bash
-KAITEN_API_TOKEN=... KAITEN_WORKSPACE_SLUG=... uv run pytest -m live
+uv run kaiten-mcp-check offline
+uv run kaiten-mcp-check docs
+# После настройки выделенной тестовой доски:
+uv run kaiten-mcp-check live
 ```
+
+[Настройка стенда, ежедневного CI и обновление эталонов — CHECKING.md](CHECKING.md).
+Live-проверки требуют полного набора настроек и изменяют только свои тестовые карточки.
 
 Публикация релизов (PyPI, GHCR, Official MCP Registry) описана в [RELEASING.md](RELEASING.md).
 
@@ -242,7 +249,7 @@ RELEASING.md
 
 ## Безопасность
 
-- Токен берётся из HTTP Bearer или `KAITEN_API_TOKEN` на каждый запрос
+- Для HTTP токен берётся из Bearer-заголовка; для stdio — из `KAITEN_API_TOKEN`
 - Сервер не пишет токены на диск
 - Предпочитайте переменные окружения, а не хардкод в MCP JSON
 - Права на стороне Kaiten определяются токеном вызывающего

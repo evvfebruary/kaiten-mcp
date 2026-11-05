@@ -57,7 +57,18 @@ jobs:
         run: uv sync --locked --group dev
 
       - name: Run tests
-        run: uv run pytest -m "not live"
+        run: uv run kaiten-mcp-check offline
+
+      - name: Check response budgets
+        run: uv run kaiten-mcp-benchmark --check
+
+      - name: Upload check reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: offline-checks
+          path: reports/
+          retention-days: 14
 
   package:
     name: Package + MCP metadata

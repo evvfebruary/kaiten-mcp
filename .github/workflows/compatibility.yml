@@ -1,0 +1,59 @@
+name: Kaiten compatibility
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: kaiten-live-board
+  cancel-in-progress: false
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
+        with:
+          python-version: '3.12'
+      - run: uv sync --locked --group dev
+      - run: uv run kaiten-mcp-check docs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: kaiten-docs
+          path: reports/
+          retention-days: 14
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: kaiten-test
+    env:
+      KAITEN_API_TOKEN: ${{ secrets.KAITEN_API_TOKEN }}
+      KAITEN_WORKSPACE_SLUG: ${{ vars.KAITEN_WORKSPACE_SLUG }}
+      KAITEN_BASE_URL: ${{ vars.KAITEN_BASE_URL }}
+      KAITEN_TEST_SPACE_ID: ${{ vars.KAITEN_TEST_SPACE_ID }}
+      KAITEN_TEST_BOARD_ID: ${{ vars.KAITEN_TEST_BOARD_ID }}
+      KAITEN_TEST_COLUMN_ID: ${{ vars.KAITEN_TEST_COLUMN_ID }}
+      KAITEN_TEST_TARGET_COLUMN_ID: ${{ vars.KAITEN_TEST_TARGET_COLUMN_ID }}
+      KAITEN_TEST_LANE_ID: ${{ vars.KAITEN_TEST_LANE_ID }}
+      KAITEN_TEST_TAG_ID: ${{ vars.KAITEN_TEST_TAG_ID }}
+      KAITEN_TEST_TAG_NAME: ${{ vars.KAITEN_TEST_TAG_NAME }}
+      KAITEN_LOG_LEVEL: CRITICAL
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
+        with:
+          python-version: '3.12'
+      - run: uv sync --locked --group dev
+      - name: Check all tools on the dedicated board
+        run: |
+          if [ -z "$KAITEN_BASE_URL" ]; then unset KAITEN_BASE_URL; fi
+          uv run kaiten-mcp-check live
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: kaiten-live
+          path: reports/
+          retention-days: 14

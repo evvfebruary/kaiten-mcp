@@ -28,3 +28,6 @@ htmlcov/
 
 # Benchmark artifacts
 benchmarks/out/
+
+# Check reports (may contain test object IDs)
+reports/

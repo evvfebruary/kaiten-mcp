@@ -7,7 +7,8 @@ import time
 from collections.abc import Awaitable, Callable, Mapping
 from typing import Any, cast
 
-from mcp.server.fastmcp import Context
+from mcp.server.mcpserver import Context
+from mcp.server.mcpserver.exceptions import ToolError
 
 from kaiten_mcp.api.client import KaitenClient
 from kaiten_mcp.api.errors import KaitenError
@@ -34,7 +35,7 @@ async def with_client[T](
         token = resolve_token(ctx)
     except AuthError as exc:
         log_event(logger, logging.ERROR, "tool_auth_missing", tool=tool_name)
-        raise ValueError(str(exc)) from exc
+        raise ToolError(str(exc)) from exc
 
     started = time.perf_counter()
     log_event(
@@ -61,7 +62,7 @@ async def with_client[T](
                 error=str(exc),
                 status_code=exc.status_code,
             )
-            raise ValueError(str(exc)) from exc
+            raise ToolError(str(exc)) from exc
         except Exception as exc:
             duration_ms = (time.perf_counter() - started) * 1000
             log_event(

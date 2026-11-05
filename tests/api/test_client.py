@@ -112,3 +112,45 @@ async def test_tokens_are_isolated_per_client() -> None:
         await client_b.get("/spaces")
     assert route.calls[0].request.headers["Authorization"] == "Bearer user-a"
     assert route.calls[1].request.headers["Authorization"] == "Bearer user-b"
+
+
+@pytest.mark.parametrize("method", ["POST", "PATCH", "DELETE"])
+@pytest.mark.parametrize("failure", ["timeout", "server"])
+@respx.mock
+async def test_writes_are_not_retried_on_ambiguous_failure(method, failure):
+    from kaiten_mcp.api.errors import KaitenError
+
+    route = respx.request(method, "https://test-tenant.kaiten.ru/api/v1/cards")
+    if failure == "timeout":
+        route.mock(side_effect=httpx.ReadTimeout("response lost"))
+    else:
+        route.respond(503, json={"message": "unavailable"})
+    async with KaitenClient("token") as client:
+        with pytest.raises(KaitenError):
+            await client.request(method, "/cards", json={"title": "One card"})
+    assert route.call_count == 1
+
+
+@respx.mock
+async def test_all_pages_follow_configured_page_size():
+    settings = get_settings()
+    settings.max_page_size = 2
+    route = respx.get("https://test-tenant.kaiten.ru/api/v1/spaces").mock(
+        side_effect=[
+            httpx.Response(200, json=[{"id": 1}, {"id": 2}]),
+            httpx.Response(200, json=[{"id": 3}]),
+        ]
+    )
+    async with KaitenClient("token", settings=settings) as client:
+        assert len(await client.get_all("/spaces")) == 3
+    assert [call.request.url.params["offset"] for call in route.calls] == ["0", "2"]
+
+
+@respx.mock
+async def test_malformed_page_is_not_silently_empty():
+    from kaiten_mcp.api.errors import KaitenError
+
+    respx.get("https://test-tenant.kaiten.ru/api/v1/cards").respond(200, json={"surprise": []})
+    async with KaitenClient("token") as client:
+        with pytest.raises(KaitenError, match="Unexpected paginated"):
+            await client.get_paginated("/cards")

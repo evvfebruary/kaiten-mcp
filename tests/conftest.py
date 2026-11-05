@@ -15,7 +15,16 @@ TEST_COMPANY_ORIGIN = f"https://{TEST_WORKSPACE_SLUG}.kaiten.ru"
 
 
 @pytest.fixture(autouse=True)
-def _reset_settings_and_auth(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
+def _reset_settings_and_auth(
+    monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest
+) -> Iterator[None]:
+    if request.node.get_closest_marker("live"):
+        get_settings.cache_clear()
+        clear_token_override()
+        yield
+        get_settings.cache_clear()
+        clear_token_override()
+        return
     get_settings.cache_clear()
     monkeypatch.setenv("KAITEN_WORKSPACE_SLUG", TEST_WORKSPACE_SLUG)
     monkeypatch.delenv("KAITEN_BASE_URL", raising=False)

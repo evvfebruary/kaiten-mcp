@@ -1,0 +1,1714 @@
+[
+  {
+    "name": "add_comment",
+    "description": "Add a comment to a task. Max useful body is truncated for context.",
+    "inputSchema": {
+      "properties": {
+        "card_id": {
+          "title": "Card Id",
+          "type": "integer"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "card_id",
+        "text"
+      ],
+      "title": "add_commentArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "properties": {
+        "_metrics": {
+          "additionalProperties": true,
+          "title": "Metrics",
+          "type": "object"
+        },
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Text"
+        },
+        "card_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Card Id"
+        },
+        "author_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Author Id"
+        },
+        "created": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Created"
+        },
+        "truncated": {
+          "title": "Truncated",
+          "type": "boolean"
+        },
+        "text_chars": {
+          "title": "Text Chars",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "text",
+        "card_id",
+        "author_id",
+        "created"
+      ],
+      "title": "CommentResult",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "add_tag_to_task",
+    "description": "Attach a tag by name (Kaiten API uses name, not tag_id, for attach).",
+    "inputSchema": {
+      "properties": {
+        "card_id": {
+          "title": "Card Id",
+          "type": "integer"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "card_id",
+        "name"
+      ],
+      "title": "add_tag_to_taskArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "$defs": {
+        "TagItem": {
+          "properties": {
+            "id": {
+              "title": "Id",
+              "type": "integer"
+            },
+            "name": {
+              "title": "Name",
+              "type": "string"
+            },
+            "color": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Color"
+            },
+            "archived": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Archived"
+            }
+          },
+          "required": [
+            "id",
+            "name"
+          ],
+          "title": "TagItem",
+          "type": "object"
+        }
+      },
+      "properties": {
+        "_metrics": {
+          "additionalProperties": true,
+          "title": "Metrics",
+          "type": "object"
+        },
+        "card_id": {
+          "title": "Card Id",
+          "type": "integer"
+        },
+        "tag": {
+          "$ref": "#/$defs/TagItem"
+        }
+      },
+      "required": [
+        "card_id",
+        "tag"
+      ],
+      "title": "TagAdded",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "create_task",
+    "description": "Create a Kaiten task/card. Requires title and board_id.",
+    "inputSchema": {
+      "properties": {
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "board_id": {
+          "title": "Board Id",
+          "type": "integer"
+        },
+        "column_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Column Id"
+        },
+        "lane_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lane Id"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "owner_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Owner Id"
+        },
+        "responsible_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Responsible Id"
+        },
+        "due_date": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Due Date"
+        },
+        "type_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Type Id"
+        },
+        "external_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "External Id"
+        },
+        "position": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Position"
+        }
+      },
+      "required": [
+        "title",
+        "board_id"
+      ],
+      "title": "create_taskArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "$defs": {
+        "Location": {
+          "properties": {
+            "board_id": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Board Id"
+            },
+            "column_id": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Column Id"
+            },
+            "lane_id": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lane Id"
+            },
+            "sort_order": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sort Order"
+            }
+          },
+          "required": [
+            "board_id",
+            "column_id",
+            "lane_id",
+            "sort_order"
+          ],
+          "title": "Location",
+          "type": "object"
+        }
+      },
+      "properties": {
+        "_metrics": {
+          "additionalProperties": true,
+          "title": "Metrics",
+          "type": "object"
+        },
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "changed": {
+          "additionalProperties": true,
+          "title": "Changed",
+          "type": "object"
+        },
+        "location": {
+          "$ref": "#/$defs/Location"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "url",
+        "changed",
+        "location"
+      ],
+      "title": "MutationResult",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "get_task",
+    "description": "Get one task. Set include_description=true for body text.",
+    "inputSchema": {
+      "properties": {
+        "card_id": {
+          "title": "Card Id",
+          "type": "integer"
+        },
+        "include_description": {
+          "default": false,
+          "title": "Include Description",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "card_id"
+      ],
+      "title": "get_taskArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "$defs": {
+        "TagItem": {
+          "properties": {
+            "id": {
+              "title": "Id",
+              "type": "integer"
+            },
+            "name": {
+              "title": "Name",
+              "type": "string"
+            },
+            "color": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Color"
+            },
+            "archived": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Archived"
+            }
+          },
+          "required": [
+            "id",
+            "name"
+          ],
+          "title": "TagItem",
+          "type": "object"
+        }
+      },
+      "properties": {
+        "_metrics": {
+          "additionalProperties": true,
+          "title": "Metrics",
+          "type": "object"
+        },
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "board_id": {
+          "title": "Board Id",
+          "type": "integer"
+        },
+        "column_id": {
+          "title": "Column Id",
+          "type": "integer"
+        },
+        "lane_id": {
+          "title": "Lane Id",
+          "type": "integer"
+        },
+        "state": {
+          "title": "State",
+          "type": "integer"
+        },
+        "condition": {
+          "title": "Condition",
+          "type": "integer"
+        },
+        "due_date": {
+          "title": "Due Date",
+          "type": "string"
+        },
+        "owner_id": {
+          "title": "Owner Id",
+          "type": "integer"
+        },
+        "board": {
+          "title": "Board",
+          "type": "string"
+        },
+        "column": {
+          "title": "Column",
+          "type": "string"
+        },
+        "lane": {
+          "title": "Lane",
+          "type": "string"
+        },
+        "tags": {
+          "items": {
+            "$ref": "#/$defs/TagItem"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "truncated": {
+          "title": "Truncated",
+          "type": "boolean"
+        },
+        "type_id": {
+          "title": "Type Id",
+          "type": "integer"
+        },
+        "responsible_id": {
+          "title": "Responsible Id",
+          "type": "integer"
+        },
+        "external_id": {
+          "title": "External Id",
+          "type": "string"
+        },
+        "created": {
+          "title": "Created",
+          "type": "string"
+        },
+        "updated": {
+          "title": "Updated",
+          "type": "string"
+        },
+        "sort_order": {
+          "title": "Sort Order",
+          "type": "number"
+        },
+        "properties": {
+          "type": "object",
+          "additionalProperties": true,
+          "title": "Properties"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "description_truncated": {
+          "title": "Description Truncated",
+          "type": "boolean"
+        },
+        "description_chars": {
+          "title": "Description Chars",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "url"
+      ],
+      "title": "TaskResult",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "get_task_tags",
+    "description": "List tags attached to a task.",
+    "inputSchema": {
+      "properties": {
+        "card_id": {
+          "title": "Card Id",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "card_id"
+      ],
+      "title": "get_task_tagsArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "properties": {
+        "_metrics": {
+          "additionalProperties": true,
+          "title": "Metrics",
+          "type": "object"
+        },
+        "items": {
+          "items": {},
+          "title": "Items",
+          "type": "array"
+        },
+        "count": {
+          "title": "Count",
+          "type": "integer"
+        },
+        "card_id": {
+          "title": "Card Id",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "count"
+      ],
+      "title": "TagList",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "list_boards",
+    "description": "List boards in a space (id, title, space_id).",
+    "inputSchema": {
+      "properties": {
+        "space_id": {
+          "title": "Space Id",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "space_id"
+      ],
+      "title": "list_boardsArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "properties": {
+        "_metrics": {
+          "additionalProperties": true,
+          "title": "Metrics",
+          "type": "object"
+        },
+        "items": {
+          "items": {},
+          "title": "Items",
+          "type": "array"
+        },
+        "count": {
+          "title": "Count",
+          "type": "integer"
+        },
+        "card_id": {
+          "title": "Card Id",
+          "type": "integer"
+        },
+        "space_id": {
+          "title": "Space Id",
+          "type": "integer"
+        },
+        "board_id": {
+          "title": "Board Id",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "count"
+      ],
+      "title": "NamedList",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "list_columns",
+    "description": "List columns on a board (id, title, type, order).",
+    "inputSchema": {
+      "properties": {
+        "board_id": {
+          "title": "Board Id",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "board_id"
+      ],
+      "title": "list_columnsArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "properties": {
+        "_metrics": {
+          "additionalProperties": true,
+          "title": "Metrics",
+          "type": "object"
+        },
+        "items": {
+          "items": {},
+          "title": "Items",
+          "type": "array"
+        },
+        "count": {
+          "title": "Count",
+          "type": "integer"
+        },
+        "card_id": {
+          "title": "Card Id",
+          "type": "integer"
+        },
+        "space_id": {
+          "title": "Space Id",
+          "type": "integer"
+        },
+        "board_id": {
+          "title": "Board Id",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "count"
+      ],
+      "title": "NamedList",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "list_comments",
+    "description": "List comments for a task with compact truncated bodies.",
+    "inputSchema": {
+      "properties": {
+        "card_id": {
+          "title": "Card Id",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "card_id"
+      ],
+      "title": "list_commentsArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "properties": {
+        "_metrics": {
+          "additionalProperties": true,
+          "title": "Metrics",
+          "type": "object"
+        },
+        "items": {
+          "items": {},
+          "title": "Items",
+          "type": "array"
+        },
+        "count": {
+          "title": "Count",
+          "type": "integer"
+        },
+        "card_id": {
+          "title": "Card Id",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "count"
+      ],
+      "title": "CommentList",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "list_lanes",
+    "description": "List lanes on a board (id, title, order).",
+    "inputSchema": {
+      "properties": {
+        "board_id": {
+          "title": "Board Id",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "board_id"
+      ],
+      "title": "list_lanesArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "properties": {
+        "_metrics": {
+          "additionalProperties": true,
+          "title": "Metrics",
+          "type": "object"
+        },
+        "items": {
+          "items": {},
+          "title": "Items",
+          "type": "array"
+        },
+        "count": {
+          "title": "Count",
+          "type": "integer"
+        },
+        "card_id": {
+          "title": "Card Id",
+          "type": "integer"
+        },
+        "space_id": {
+          "title": "Space Id",
+          "type": "integer"
+        },
+        "board_id": {
+          "title": "Board Id",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "count"
+      ],
+      "title": "NamedList",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "list_spaces",
+    "description": "List spaces (id, title) for discovering board targets.",
+    "inputSchema": {
+      "properties": {},
+      "title": "list_spacesArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "properties": {
+        "_metrics": {
+          "additionalProperties": true,
+          "title": "Metrics",
+          "type": "object"
+        },
+        "items": {
+          "items": {},
+          "title": "Items",
+          "type": "array"
+        },
+        "count": {
+          "title": "Count",
+          "type": "integer"
+        },
+        "card_id": {
+          "title": "Card Id",
+          "type": "integer"
+        },
+        "space_id": {
+          "title": "Space Id",
+          "type": "integer"
+        },
+        "board_id": {
+          "title": "Board Id",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "count"
+      ],
+      "title": "NamedList",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "list_tags",
+    "description": "List company/space tags (paginated, compact).",
+    "inputSchema": {
+      "properties": {
+        "query": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Query"
+        },
+        "space_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Space Id"
+        },
+        "offset": {
+          "default": 0,
+          "title": "Offset",
+          "type": "integer"
+        },
+        "limit": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Limit"
+        }
+      },
+      "title": "list_tagsArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "properties": {
+        "_metrics": {
+          "additionalProperties": true,
+          "title": "Metrics",
+          "type": "object"
+        },
+        "items": {
+          "items": {},
+          "title": "Items",
+          "type": "array"
+        },
+        "count": {
+          "title": "Count",
+          "type": "integer"
+        },
+        "card_id": {
+          "title": "Card Id",
+          "type": "integer"
+        },
+        "offset": {
+          "title": "Offset",
+          "type": "integer"
+        },
+        "limit": {
+          "title": "Limit",
+          "type": "integer"
+        },
+        "has_more": {
+          "title": "Has More",
+          "type": "boolean"
+        },
+        "next_offset": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Next Offset"
+        }
+      },
+      "required": [
+        "items",
+        "count",
+        "offset",
+        "limit",
+        "has_more",
+        "next_offset"
+      ],
+      "title": "TagPage",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "list_tasks",
+    "description": "List tasks with filters. Default page 20 (max 100). Compact summaries only.",
+    "inputSchema": {
+      "properties": {
+        "query": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Query"
+        },
+        "space_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Space Id"
+        },
+        "board_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Board Id"
+        },
+        "column_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Column Id"
+        },
+        "lane_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lane Id"
+        },
+        "owner_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Owner Id"
+        },
+        "responsible_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Responsible Id"
+        },
+        "states": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "States"
+        },
+        "tag": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tag"
+        },
+        "external_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "External Id"
+        },
+        "offset": {
+          "default": 0,
+          "title": "Offset",
+          "type": "integer"
+        },
+        "limit": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Limit"
+        }
+      },
+      "title": "list_tasksArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "properties": {
+        "_metrics": {
+          "additionalProperties": true,
+          "title": "Metrics",
+          "type": "object"
+        },
+        "items": {
+          "items": {},
+          "title": "Items",
+          "type": "array"
+        },
+        "count": {
+          "title": "Count",
+          "type": "integer"
+        },
+        "card_id": {
+          "title": "Card Id",
+          "type": "integer"
+        },
+        "offset": {
+          "title": "Offset",
+          "type": "integer"
+        },
+        "limit": {
+          "title": "Limit",
+          "type": "integer"
+        },
+        "has_more": {
+          "title": "Has More",
+          "type": "boolean"
+        },
+        "next_offset": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Next Offset"
+        }
+      },
+      "required": [
+        "items",
+        "count",
+        "offset",
+        "limit",
+        "has_more",
+        "next_offset"
+      ],
+      "title": "TaskPage",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "move_task",
+    "description": "Move a task via Kaiten card PATCH (board/column/lane/sort/prev_card_id).",
+    "inputSchema": {
+      "properties": {
+        "card_id": {
+          "title": "Card Id",
+          "type": "integer"
+        },
+        "board_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Board Id"
+        },
+        "column_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Column Id"
+        },
+        "lane_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lane Id"
+        },
+        "sort_order": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sort Order"
+        },
+        "prev_card_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Prev Card Id"
+        }
+      },
+      "required": [
+        "card_id"
+      ],
+      "title": "move_taskArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "$defs": {
+        "Location": {
+          "properties": {
+            "board_id": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Board Id"
+            },
+            "column_id": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Column Id"
+            },
+            "lane_id": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lane Id"
+            },
+            "sort_order": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sort Order"
+            }
+          },
+          "required": [
+            "board_id",
+            "column_id",
+            "lane_id",
+            "sort_order"
+          ],
+          "title": "Location",
+          "type": "object"
+        }
+      },
+      "properties": {
+        "_metrics": {
+          "additionalProperties": true,
+          "title": "Metrics",
+          "type": "object"
+        },
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "changed": {
+          "additionalProperties": true,
+          "title": "Changed",
+          "type": "object"
+        },
+        "location": {
+          "$ref": "#/$defs/Location"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "url",
+        "changed",
+        "location"
+      ],
+      "title": "MutationResult",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "remove_tag_from_task",
+    "description": "Remove a tag from a task by tag_id (Kaiten delete uses tag_id).",
+    "inputSchema": {
+      "properties": {
+        "card_id": {
+          "title": "Card Id",
+          "type": "integer"
+        },
+        "tag_id": {
+          "title": "Tag Id",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "card_id",
+        "tag_id"
+      ],
+      "title": "remove_tag_from_taskArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "properties": {
+        "_metrics": {
+          "additionalProperties": true,
+          "title": "Metrics",
+          "type": "object"
+        },
+        "card_id": {
+          "title": "Card Id",
+          "type": "integer"
+        },
+        "removed_tag_id": {
+          "title": "Removed Tag Id",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "card_id",
+        "removed_tag_id"
+      ],
+      "title": "TagRemoved",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": true,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "update_task",
+    "description": "Update card fields via PATCH. condition: 1=live, 2=archived, 3=deleted. Workflow status (queued/in-progress/done) comes from the column \u2014 use move_task. Responsible is set only on create_task.",
+    "inputSchema": {
+      "properties": {
+        "card_id": {
+          "title": "Card Id",
+          "type": "integer"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "owner_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Owner Id"
+        },
+        "due_date": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Due Date"
+        },
+        "type_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Type Id"
+        },
+        "condition": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Condition"
+        },
+        "external_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "External Id"
+        },
+        "properties": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Properties"
+        }
+      },
+      "required": [
+        "card_id"
+      ],
+      "title": "update_taskArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "$defs": {
+        "Location": {
+          "properties": {
+            "board_id": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Board Id"
+            },
+            "column_id": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Column Id"
+            },
+            "lane_id": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lane Id"
+            },
+            "sort_order": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sort Order"
+            }
+          },
+          "required": [
+            "board_id",
+            "column_id",
+            "lane_id",
+            "sort_order"
+          ],
+          "title": "Location",
+          "type": "object"
+        }
+      },
+      "properties": {
+        "_metrics": {
+          "additionalProperties": true,
+          "title": "Metrics",
+          "type": "object"
+        },
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "changed": {
+          "additionalProperties": true,
+          "title": "Changed",
+          "type": "object"
+        },
+        "location": {
+          "$ref": "#/$defs/Location"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "url",
+        "changed",
+        "location"
+      ],
+      "title": "MutationResult",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": true
+    }
+  }
+]

@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
-from mcp.server.fastmcp import Context, FastMCP
+from mcp.server import MCPServer
+from mcp.server.mcpserver import Context
+from mcp.server.mcpserver.exceptions import ToolError
 
 from kaiten_mcp import api
 from kaiten_mcp.presentation import (
@@ -14,10 +16,11 @@ from kaiten_mcp.presentation import (
     paginated,
     summarize_card,
 )
+from kaiten_mcp.tool_models import MutationResult, TaskPage, TaskResult
 from kaiten_mcp.tools._common import with_client
 
 
-def register(mcp: FastMCP) -> None:
+def register(mcp: MCPServer) -> None:
     @mcp.tool(
         name="create_task", description="Create a Kaiten task/card. Requires title and board_id."
     )
@@ -34,7 +37,7 @@ def register(mcp: FastMCP) -> None:
         type_id: int | None = None,
         external_id: str | None = None,
         position: int | None = None,
-    ) -> dict[str, Any]:
+    ) -> MutationResult:
         payload: dict[str, Any] = {"title": title, "board_id": board_id}
         optional = {
             "column_id": column_id,
@@ -53,12 +56,15 @@ def register(mcp: FastMCP) -> None:
             card = await api.cards.create_card(client, payload)
             return mutation_result(card, changed={"created": True, **payload}, settings=settings)
 
-        return await with_client(
-            ctx,
-            "create_task",
-            _run,
-            arguments=payload,
-            input_items=1,
+        return cast(
+            MutationResult,
+            await with_client(
+                ctx,
+                "create_task",
+                _run,
+                arguments=payload,
+                input_items=1,
+            ),
         )
 
     @mcp.tool(
@@ -68,7 +74,7 @@ def register(mcp: FastMCP) -> None:
         card_id: int,
         ctx: Context,
         include_description: bool = False,
-    ) -> dict[str, Any]:
+    ) -> TaskResult:
         async def _run(client: api.KaitenClient, settings: Any) -> dict[str, Any]:
             card = await api.cards.get_card(
                 client,
@@ -77,13 +83,16 @@ def register(mcp: FastMCP) -> None:
             )
             return detail_card(card, include_description=include_description, settings=settings)
 
-        return await with_client(
-            ctx,
-            "get_task",
-            _run,
-            arguments={"card_id": card_id, "include_description": include_description},
-            input_items=1,
-            truncated_fn=lambda result: bool(result.get("description_truncated")),
+        return cast(
+            TaskResult,
+            await with_client(
+                ctx,
+                "get_task",
+                _run,
+                arguments={"card_id": card_id, "include_description": include_description},
+                input_items=1,
+                truncated_fn=lambda result: bool(result.get("description_truncated")),
+            ),
         )
 
     @mcp.tool(
@@ -104,7 +113,7 @@ def register(mcp: FastMCP) -> None:
         external_id: str | None = None,
         offset: int = 0,
         limit: int | None = None,
-    ) -> dict[str, Any]:
+    ) -> TaskPage:
         async def _run(client: api.KaitenClient, settings: Any) -> dict[str, Any]:
             page_size = clamp_limit(limit, settings)
             filters = {
@@ -135,27 +144,30 @@ def register(mcp: FastMCP) -> None:
                 requested_limit=page_size,
             )
 
-        return await with_client(
-            ctx,
-            "list_tasks",
-            _run,
-            arguments={
-                "query": query,
-                "space_id": space_id,
-                "board_id": board_id,
-                "column_id": column_id,
-                "lane_id": lane_id,
-                "owner_id": owner_id,
-                "responsible_id": responsible_id,
-                "states": states,
-                "tag": tag,
-                "external_id": external_id,
-                "offset": offset,
-                "limit": limit,
-            },
-            output_items_fn=lambda result: int(result.get("count", 0)),
-            truncated_fn=lambda result: any(
-                item.get("truncated") for item in result.get("items", [])
+        return cast(
+            TaskPage,
+            await with_client(
+                ctx,
+                "list_tasks",
+                _run,
+                arguments={
+                    "query": query,
+                    "space_id": space_id,
+                    "board_id": board_id,
+                    "column_id": column_id,
+                    "lane_id": lane_id,
+                    "owner_id": owner_id,
+                    "responsible_id": responsible_id,
+                    "states": states,
+                    "tag": tag,
+                    "external_id": external_id,
+                    "offset": offset,
+                    "limit": limit,
+                },
+                output_items_fn=lambda result: int(result.get("count", 0)),
+                truncated_fn=lambda result: any(
+                    item.get("truncated") for item in result.get("items", [])
+                ),
             ),
         )
 
@@ -179,9 +191,9 @@ def register(mcp: FastMCP) -> None:
         condition: int | None = None,
         external_id: str | None = None,
         properties: dict[str, Any] | None = None,
-    ) -> dict[str, Any]:
+    ) -> MutationResult:
         if condition is not None and condition not in {1, 2, 3}:
-            raise ValueError("condition must be 1 (live), 2 (archived), or 3 (deleted).")
+            raise ToolError("condition must be 1 (live), 2 (archived), or 3 (deleted).")
 
         payload: dict[str, Any] = {
             "title": title,
@@ -195,18 +207,21 @@ def register(mcp: FastMCP) -> None:
         }
         clean = {key: value for key, value in payload.items() if value is not None}
         if not clean:
-            raise ValueError("update_task requires at least one field to change.")
+            raise ToolError("update_task requires at least one field to change.")
 
         async def _run(client: api.KaitenClient, settings: Any) -> dict[str, Any]:
             card = await api.cards.update_card(client, card_id, clean)
             return mutation_result(card, changed=clean, settings=settings)
 
-        return await with_client(
-            ctx,
-            "update_task",
-            _run,
-            arguments={"card_id": card_id, **clean},
-            input_items=1,
+        return cast(
+            MutationResult,
+            await with_client(
+                ctx,
+                "update_task",
+                _run,
+                arguments={"card_id": card_id, **clean},
+                input_items=1,
+            ),
         )
 
     @mcp.tool(
@@ -221,9 +236,9 @@ def register(mcp: FastMCP) -> None:
         lane_id: int | None = None,
         sort_order: float | None = None,
         prev_card_id: int | None = None,
-    ) -> dict[str, Any]:
+    ) -> MutationResult:
         if all(value is None for value in (board_id, column_id, lane_id, sort_order, prev_card_id)):
-            raise ValueError("move_task requires at least one location field.")
+            raise ToolError("move_task requires at least one location field.")
 
         async def _run(client: api.KaitenClient, settings: Any) -> dict[str, Any]:
             card = await api.cards.move_card(
@@ -248,17 +263,20 @@ def register(mcp: FastMCP) -> None:
             }
             return mutation_result(card, changed=changed, settings=settings)
 
-        return await with_client(
-            ctx,
-            "move_task",
-            _run,
-            arguments={
-                "card_id": card_id,
-                "board_id": board_id,
-                "column_id": column_id,
-                "lane_id": lane_id,
-                "sort_order": sort_order,
-                "prev_card_id": prev_card_id,
-            },
-            input_items=1,
+        return cast(
+            MutationResult,
+            await with_client(
+                ctx,
+                "move_task",
+                _run,
+                arguments={
+                    "card_id": card_id,
+                    "board_id": board_id,
+                    "column_id": column_id,
+                    "lane_id": lane_id,
+                    "sort_order": sort_order,
+                    "prev_card_id": prev_card_id,
+                },
+                input_items=1,
+            ),
         )

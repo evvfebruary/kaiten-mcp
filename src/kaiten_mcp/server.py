@@ -1,15 +1,17 @@
-"""FastMCP application factory."""
+"""MCPServer application factory."""
 
 from __future__ import annotations
 
 import logging
 from typing import Literal
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server import MCPServer
+from mcp.types import Tool, ToolAnnotations
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
 from kaiten_mcp import __version__
+from kaiten_mcp.checks.registry import READ_TOOLS
 from kaiten_mcp.config import Settings, get_settings
 from kaiten_mcp.logging_utils import configure_logging, get_logger, log_event
 from kaiten_mcp.tools import register_all
@@ -29,22 +31,35 @@ def _log_level(value: str) -> LogLevel:
     return allowed.get(normalized, "INFO")
 
 
-def create_server(settings: Settings | None = None) -> FastMCP:
+class KaitenServer(MCPServer):
+    """Stable tool catalog with explicit operation annotations."""
+
+    async def list_tools(self) -> list[Tool]:
+        tools = await super().list_tools()
+        for tool in tools:
+            read_only = tool.name in READ_TOOLS
+            tool.annotations = ToolAnnotations(
+                read_only_hint=read_only,
+                destructive_hint=tool.name in {"update_task", "move_task", "remove_tag_from_task"},
+                idempotent_hint=read_only or tool.name == "remove_tag_from_task",
+                open_world_hint=True,
+            )
+        return sorted(tools, key=lambda tool: tool.name)
+
+
+def create_server(settings: Settings | None = None) -> MCPServer:
     cfg = settings or get_settings()
     configure_logging(level=cfg.log_level, fmt=cfg.log_format)
     logger = get_logger("server")
     origin = cfg.company_origin.removeprefix("https://").removeprefix("http://")
-    mcp = FastMCP(
+    mcp = KaitenServer(
         name="kaiten-mcp",
         instructions=(
             f"Kaiten task MCP for {origin}. "
             "Discover spaces/boards/columns/lanes first, then create/update/move tasks. "
             "Responses are compact by default; request descriptions explicitly."
         ),
-        host=cfg.host,
-        port=cfg.port,
-        streamable_http_path="/mcp",
-        stateless_http=True,
+        version=__version__,
         log_level=_log_level(cfg.log_level),
     )
     register_all(mcp)
@@ -67,10 +82,10 @@ def create_server(settings: Settings | None = None) -> FastMCP:
 
 # Lazy module-level server for `mcp run` style launches.
 # Avoids requiring instance env vars at import time (e.g. during test collection).
-_mcp: FastMCP | None = None
+_mcp: MCPServer | None = None
 
 
-def __getattr__(name: str) -> FastMCP:
+def __getattr__(name: str) -> MCPServer:
     global _mcp
     if name == "mcp":
         if _mcp is None:

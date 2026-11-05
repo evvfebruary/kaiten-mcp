@@ -9,12 +9,12 @@ from kaiten_mcp.api.models import Comment
 
 
 async def list_comments(client: KaitenClient, card_id: int) -> list[Comment]:
-    data = await client.get(f"/cards/{card_id}/comments")
+    data = await client.get_all(f"/cards/{card_id}/comments")
     if data is None:
         return []
     if not isinstance(data, list):
         raise TypeError("Expected comment list from Kaiten.")
-    return [Comment.model_validate(item) for item in data if isinstance(item, dict)]
+    return [Comment.model_validate(item) for item in data]
 
 
 async def add_comment(client: KaitenClient, card_id: int, text: str) -> Comment:

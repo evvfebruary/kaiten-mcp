@@ -5,6 +5,7 @@ from __future__ import annotations
 import httpx
 import pytest
 import respx
+from mcp.types import CallToolResult
 
 from kaiten_mcp.auth import set_token_override
 from kaiten_mcp.server import create_server
@@ -13,11 +14,11 @@ from kaiten_mcp.server import create_server
 async def _call(tool_name: str, arguments: dict) -> dict:
     server = create_server()
     result = await server.call_tool(tool_name, arguments)
-    if isinstance(result, tuple) and len(result) == 2 and isinstance(result[1], dict):
-        return result[1]
-    if isinstance(result, dict):
-        return result
-    raise AssertionError(f"Unexpected tool result shape: {type(result)!r}")
+    assert isinstance(result, CallToolResult)
+    if result.is_error:
+        raise ValueError(str(result.content))
+    assert result.structured_content is not None
+    return result.structured_content
 
 
 @pytest.mark.asyncio
@@ -157,10 +158,14 @@ async def test_discovery_tools(api_token: str) -> None:
     assert set(spaces["items"][0]) == {"id", "title"}
     boards = await _call("list_boards", {"space_id": 1})
     assert boards["count"] == 1
+    assert boards["space_id"] == 1
     columns = await _call("list_columns", {"board_id": 2})
     assert columns["items"][0]["type"] == 1
+    assert columns["board_id"] == 2
+    assert "parent_column_id" in columns["items"][0]
     lanes = await _call("list_lanes", {"board_id": 2})
     assert lanes["items"][0]["id"] == 4
+    assert lanes["board_id"] == 2
     tags = await _call("list_tags", {})
     assert tags["items"][0]["name"] == "bug"
 

@@ -1,23 +1,14 @@
-"""Opt-in live smoke test against the configured Kaiten tenant."""
-
-from __future__ import annotations
-
-import os
+"""Explicit live invocation requires the complete isolated-board configuration."""
 
 import pytest
 
-from kaiten_mcp.api.client import KaitenClient
-from kaiten_mcp.config import get_settings
+from kaiten_mcp.checks.live import LiveConfig, run_live
 
 pytestmark = pytest.mark.live
 
 
-@pytest.mark.asyncio
-async def test_live_list_spaces() -> None:
-    token = os.environ.get("KAITEN_API_TOKEN", "").strip()
-    if not token:
-        pytest.skip("KAITEN_API_TOKEN is required for live tests")
-
-    async with KaitenClient(token, settings=get_settings()) as client:
-        spaces = await client.get("/spaces")
-    assert isinstance(spaces, list)
+async def test_live_all_tools():
+    result = await run_live(LiveConfig.from_env())
+    assert result["status"] == "passed", result
+    assert result["cleanup"]["status"] == "passed", result
+    assert all(row["status"] == "passed" for row in result["tools"]), result

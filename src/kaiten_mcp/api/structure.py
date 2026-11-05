@@ -7,12 +7,12 @@ from kaiten_mcp.api.models import Board, Column, Lane, Space
 
 
 async def list_spaces(client: KaitenClient) -> list[Space]:
-    data = await client.get("/spaces")
+    data = await client.get_all("/spaces")
     if data is None:
         return []
     if not isinstance(data, list):
         raise TypeError("Expected space list from Kaiten.")
-    return [Space.model_validate(item) for item in data if isinstance(item, dict)]
+    return [Space.model_validate(item) for item in data]
 
 
 async def list_boards(client: KaitenClient, space_id: int) -> list[Board]:
@@ -21,7 +21,7 @@ async def list_boards(client: KaitenClient, space_id: int) -> list[Board]:
         return []
     if not isinstance(data, list):
         raise TypeError("Expected board list from Kaiten.")
-    return [Board.model_validate(item) for item in data if isinstance(item, dict)]
+    return [Board.model_validate(item) for item in data]
 
 
 async def list_columns(client: KaitenClient, board_id: int) -> list[Column]:
@@ -30,7 +30,7 @@ async def list_columns(client: KaitenClient, board_id: int) -> list[Column]:
         return []
     if not isinstance(data, list):
         raise TypeError("Expected column list from Kaiten.")
-    return [Column.model_validate(item) for item in data if isinstance(item, dict)]
+    return [Column.model_validate(item) for item in data]
 
 
 async def list_lanes(client: KaitenClient, board_id: int) -> list[Lane]:
@@ -39,4 +39,4 @@ async def list_lanes(client: KaitenClient, board_id: int) -> list[Lane]:
         return []
     if not isinstance(data, list):
         raise TypeError("Expected lane list from Kaiten.")
-    return [Lane.model_validate(item) for item in data if isinstance(item, dict)]
+    return [Lane.model_validate(item) for item in data]

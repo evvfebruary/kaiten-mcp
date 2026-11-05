@@ -77,7 +77,7 @@ def resolve_token(ctx: AuthContext | Any | None = None) -> str:
     Order:
     1. Explicit request-scoped override
     2. HTTP Authorization: Bearer <token>
-    3. KAITEN_API_TOKEN environment variable (stdio / local clients)
+    3. KAITEN_API_TOKEN environment variable (stdio only; never for HTTP requests)
     """
     override = _token_override.get()
     if override:
@@ -86,6 +86,13 @@ def resolve_token(ctx: AuthContext | Any | None = None) -> str:
     header_token = _token_from_context(ctx)
     if header_token:
         return header_token
+
+    try:
+        request = ctx.request_context.request if ctx is not None else None
+    except (AttributeError, LookupError, ValueError):
+        request = None
+    if request is not None:
+        raise AuthError("Missing Kaiten API token: HTTP requires Authorization: Bearer <token>.")
 
     env_token = os.environ.get(_TOKEN_ENV, "").strip()
     if env_token:
